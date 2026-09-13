@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ASFA-ETCS Configuration for RENFE Serie 256 -->
+<!-- Configuración de sistemas de seguridad ASFA y ETCS -->
+
+<AsfahEtcsConfig>
+    <!-- Sistema ASFA Digital -->
+    <ASFASystem>
+        <Enabled>true</Enabled>
+        <Version>2.0</Version>
+        <Name>ASFA Digital Serie 256</Name>
+        
+        <!-- Parámetros de funcionamiento -->
+        <Frequencies>
+            <YellowSignal hz="1688">Señal amarilla - Reducir velocidad</YellowSignal>
+            <RedSignal hz="1998">Señal roja - Parada obligatoria</RedSignal>
+            <WhiteSignal hz="2000">Señal blanca - Vía libre</WhiteSignal>
+        </Frequencies>
+        
+        <!-- Límites de velocidad por señal -->
+        <SpeedLimits>
+            <Yellow kmh="60" />
+            <Red kmh="0" />
+            <White kmh="160" />
+        </SpeedLimits>
+        
+        <!-- Tiempos de reacción y supervición -->
+        <TimingParameters>
+            <ReactionTime seconds="4">Tiempo de reacción del maquinista</ReactionTime>
+            <SupervisionTime seconds="60">Tiempo de supervisión máximo sin confirmación</SupervisionTime>
+            <OverspeedTolerance kmh="5">Tolerancia de exceso de velocidad</OverspeedTolerance>
+        </TimingParameters>
+        
+        <!-- Configuración de alarmas -->
+        <AlarmConfiguration>
+            <YellowAlarm enabled="true">
+                <AudibleWarning enabled="true" volume="0.8">asfa_yellow</AudibleWarning>
+                <VisualWarning enabled="true" color="yellow" />
+                <DmiMessage>⚠️  Aviso amarillo - Reducir velocidad</DmiMessage>
+            </YellowAlarm>
+            
+            <RedAlarm enabled="true">
+                <AudibleWarning enabled="true" volume="1.0" loop="true">asfa_red</AudibleWarning>
+                <VisualWarning enabled="true" color="red" blink="true" />
+                <DmiMessage>🚨 Alarma roja - PARADA OBLIGATORIA</DmiMessage>
+                <EmergencyBrake>
+                    <AutoActivation enabled="true" delay_seconds="4" />
+                </EmergencyBrake>
+            </RedAlarm>
+            
+            <OverspeedAlarm enabled="true">
+                <Threshold kmh="10">Activar si exceso > 10 km/h</Threshold>
+                <AudibleWarning enabled="true" volume="0.9">asfa_overspeed</AudibleWarning>
+                <ServiceBrakeActivation enabled="true" threshold_kmh="15" />
+            </OverspeedAlarm>
+        </AlarmConfiguration>
+        
+        <!-- Sistemas auxiliares -->
+        <AuxiliarySystems>
+            <AudioSystem enabled="true">
+                <SoundDirectory>Sounds/ASFA/</SoundDirectory>
+                <Formats>wav, ogg</Formats>
+            </AudioSystem>
+            
+            <VisualDisplay enabled="true">
+                <Type>DMI Integration</Type>
+                <Resolution>1024x768</Resolution>
+                <RefreshRate hz="50" />
+            </VisualDisplay>
+            
+            <ExternalConnection enabled="true">
+                <Port>9001</Port>
+                <Protocol>JSON/TCP</Protocol>
+                <Timeout seconds="5" />
+            </ExternalConnection>
+        </AuxiliarySystems>
+    </ASFASystem>
+    
+    <!-- Sistema ETCS Multi-Nivel -->
+    <ETCSSystem>
+        <Enabled>true</Enabled>
+        <Version>3.6.0</Version>
+        <Name>ETCS Multi-Level Serie 256</Name>
+        
+        <!-- Niveles equipados -->
+        <EquippedLevels>
+            <Level name="STM_LZB" equipped="true">Linien-Zug-Beeinflussung (Legacy)</Level>
+            <Level name="Level0" equipped="true">Odometer-based (Fallback)</Level>
+            <Level name="Level1" equipped="true">Eurobalise-equipped</Level>
+            <Level name="Level2" equipped="true">Eurobalise + GSM-R (Primary)</Level>
+            <Level name="Level3" equipped="false">CBTC (Future)</Level>
+        </EquippedLevels>
+        
+        <!-- Nivel por defecto -->
+        <DefaultLevel>Level2</DefaultLevel>
+        
+        <!-- Configuración de GSM-R (Level 2) -->
+        <GSMRConfiguration>
+            <Enabled>true</Enabled>
+            <Frequency>876-880 MHz</Frequency>
+            <Standard>GSM-R</Standard>
+            <RBCSettings>
+                <DefaultRBC id="RBC_MADRID_01">
+                    <Name>RBC Madrid Centro</Name>
+                    <Frequency>876.4 MHz</Frequency>
+                </DefaultRBC>
+                <DefaultRBC id="RBC_MADRID_02">
+                    <Name>RBC Madrid Cercanas</Name>
+                    <Frequency>876.8 MHz</Frequency>
+                </DefaultRBC>
+            </RBCSettings>
+            
+            <MessageParameters>
+                <PositionReportInterval seconds="2" />
+                <HeartbeatInterval seconds="5" />
+                <LinkLossTimeout seconds="10" />
+            </MessageParameters>
+        </GSMRConfiguration>
+        
+        <!-- Configuración LZB (STM Mode) -->
+        <LZBConfiguration>
+            <Enabled>true</Enabled>
+            <Frequency mhz="81.81">Frecuencia LZB alemana</Frequency>
+            <DataRate bps="600">Velocidad de datos</DataRate>
+            <PulsePattern>
+                <Frequency hz="1688">Portadora LZB</Frequency>
+                <Modulation>FSK</Modulation>
+            </PulsePattern>
+            <RepeaterSpacing meters="250">Distancia entre repetidores</RepeaterSpacing>
+        </LZBConfiguration>
+        
+        <!-- Configuración Eurobalises (Level 1) -->
+        <EurobaliseConfiguration>
+            <Enabled>true</Enabled>
+            <TransmissionRange meters="25">Rango de transmisión</TransmissionRange>
+            <Frequency>27.095 MHz</Frequency>
+            <Protocol>RFID</Protocol>
+            
+            <MessageTypes>
+                <Message type="LINKING">Información de ruta y velocidad</Message>
+                <Message type="STATIC">Datos estáticos de la línea</Message>
+                <Message type="STOP_POINT">Puntos de parada</Message>
+            </MessageTypes>
+        </EurobaliseConfiguration>
+        
+        <!-- Parámetros de supervisión de velocidad -->
+        <SpeedSupervision>
+            <SpeedTolerance percent="5">Tolerancia de supervisión de velocidad</SpeedTolerance>
+            <WarningThreshold percent="95">Genera aviso al 95% de límite</WarningThreshold>
+            <InterventionThreshold percent="100">Intervención al 100% de límite</InterventionThreshold>
+            
+            <ServiceBrake>
+                <Enabled>true</Enabled>
+                <MaxDeceleration ms2="0.7" />
+            </ServiceBrake>
+            
+            <EmergencyBrake>
+                <Enabled>true</Enabled>
+                <MaxDeceleration ms2="1.2" />
+                <AutoActivation enabled="true" />
+            </EmergencyBrake>
+        </SpeedSupervision>
+        
+        <!-- Configuración DMI (Driver Machine Interface) -->
+        <DMIConfiguration>
+            <Enabled>true</Enabled>
+            <Type>Full Cabin Display</Type>
+            <Resolution>1024x768</Resolution>
+            <RefreshRate hz="50" />
+            <Brightness percent="100" />
+            
+            <DisplayElements>
+                <Element>Current Speed (km/h)</Element>
+                <Element>Ceiling Speed (km/h)</Element>
+                <Element>Target Speed (km/h)</Element>
+                <Element>Distance to Target (m)</Element>
+                <Element>Current Mode (SB/OS/LS/PS/FS/SH/UN)</Element>
+                <Element>Current Level</Element>
+                <Element>Message Log</Element>
+                <Element>Status Indicators</Element>
+            </DisplayElements>
+        </DMIConfiguration>
+        
+        <!-- Modos de operación -->
+        <OperatingModes>
+            <Mode name="SB">Stand By - Sistema preparado</Mode>
+            <Mode name="OS">On Sight - A la vista</Mode>
+            <Mode name="LS">Limited Supervision - Supervisión limitada</Mode>
+            <Mode name="PS">Partial Supervision - Supervisión parcial</Mode>
+            <Mode name="FS">Full Supervision - Supervisión completa</Mode>
+            <Mode name="SH">Shunting - Maniobras</Mode>
+            <Mode name="UN">Unfitted - No equipado</Mode>
+        </OperatingModes>
+    </ETCSSystem>
+    
+    <!-- Configuración del Puente de Integración ASFA-ETCS -->
+    <IntegrationBridge>
+        <Enabled>true</Enabled>
+        <Mode>HYBRID</Mode>
+        <ProtocolVersion>1.2.0</ProtocolVersion>
+        
+        <!-- Comunicación interna -->
+        <InternalCommunication>
+            <Enabled>true</Enabled>
+            <QueueSize>100</QueueSize>
+            <SyncInterval seconds="0.5">Intervalo de sincronización</SyncInterval>
+            
+            <ConflictResolution strategy="CONSERVATIVE">
+                <!-- CONSERVATIVE: aplica el límite más bajo entre ASFA y ETCS -->
+                <!-- ASFA_PRIORITY: da prioridad a ASFA -->
+                <!-- ETCS_PRIORITY: da prioridad a ETCS -->
+                <Description>Adoptar el límite más conservador de ambos sistemas</Description>
+            </ConflictResolution>
+        </InternalCommunication>
+        
+        <!-- Comunicación externa -->
+        <ExternalCommunication>
+            <Enabled>true</Enabled>
+            <Port>9001</Port>
+            <Protocol>JSON over TCP</Protocol>
+            <BufferSize bytes="1024" />
+            <Timeout seconds="5" />
+            
+            <AllowedOperations>
+                <Operation>QUERY_STATUS</Operation>
+                <Operation>SET_PARAMETER</Operation>
+                <Operation>EXTERNAL_SIGNAL_INJECTION</Operation>
+                <Operation>SYSTEM_DIAGNOSTICS</Operation>
+            </AllowedOperations>
+        </ExternalCommunication>
+        
+        <!-- Sincronización de parámetros -->
+        <SynchronizationRules>
+            <Rule name="SpeedConsistency">
+                <Parameter>speed_limit</Parameter>
+                <Strategy>conservative</Strategy>
+                <Tolerance kmh="10" />
+                <LogConflicts>true</LogConflicts>
+            </Rule>
+            
+            <Rule name="EmergencyBrake">
+                <Parameter>emergency_brake_active</Parameter>
+                <Strategy>immediate_propagation</Strategy>
+                <AffectedSystem>both</AffectedSystem>
+            </Rule>
+            
+            <Rule name="ModeTransition">
+                <Parameter>operating_mode</Parameter>
+                <Strategy>ETCS_leads</Strategy>
+                <ValidateWith>ASFA</ValidateWith>
+            </Rule>
+        </SynchronizationRules>
+    </IntegrationBridge>
+    
+    <!-- Configuración de seguridad general -->
+    <SecurityConfiguration>
+        <SafetyIntegrity level="SIL3">Sistema de Integridad de Seguridad Nivel 3</SafetyIntegrity>
+        <RedundancyLevel>1oo2D (1 out of 2 Diagnostic)</RedundancyLevel>
+        
+        <FaultDetection>
+            <SensorFailure enabled="true" />
+            <CommunicationLoss enabled="true" />
+            <ComputerFailure enabled="true" />
+            <ActuatorFailure enabled="true" />
+        </FaultDetection>
+        
+        <FailSafeActions>
+            <Action trigger="SystemFailure">Apply Emergency Brake</Action>
+            <Action trigger="CommunicationLoss">Revert to lower ETCS level</Action>
+            <Action trigger="ControllerError">Initiate safe stop procedure</Action>
+        </FailSafeActions>
+    </SecurityConfiguration>
+    
+    <!-- Parámetros del tren Serie 256 -->
+    <TrainParameters>
+        <TrainType>RENFE Series 256</TrainType>
+        <TrainLength meters="74.5" />
+        <MaxSpeed kmh="160" />
+        <MaxAcceleration ms2="1.3" />
+        <MaxBrakingDeceleration ms2="1.2" />
+        <Weight tons="350" />
+        <MaxCapacity passengers="482" />
+        <BrakeDistance meters="120">A 100 km/h con freno de emergencia</BrakeDistance>
+    </TrainParameters>
+    
+    <!-- Registro y diagnósticos -->
+    <Logging>
+        <Enabled>true</Enabled>
+        <LogLevel>INFO</LogLevel>
+        <MaxLogSize mb="50" />
+        <LogDirectory>Logs/ASFA_ETCS/</LogDirectory>
+        
+        <LogEvents>
+            <Event>ASFA Signal Changes</Event>
+            <Event>ASFA Alarms</Event>
+            <Event>ETCS Mode Transitions</Event>
+            <Event>ETCS Level Changes</Event>
+            <Event>Speed Limit Changes</Event>
+            <Event>Conflicts Between Systems</Event>
+            <Event>External Commands</Event>
+            <Event>System Errors</Event>
+        </LogEvents>
+    </Logging>
+    
+    <!-- Configuración de pruebas y diagnósticos -->
+    <DiagnosticsMode enabled="false">
+        <EnableSimulatedSignals>true</EnableSimulatedSignals>
+        <EnableTestPatterns>true</EnableTestPatterns>
+        <VerboseLogging>true</VerboseLogging>
+        <SimulationSpeed>1.0</SimulationSpeed>
+    </DiagnosticsMode>
+    
+</AsfahEtcsConfig>
