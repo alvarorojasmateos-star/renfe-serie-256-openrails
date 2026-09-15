@@ -1,0 +1,39 @@
+# Logs
+Logs/
+*.log
+
+# Generated files
+*.o
+*.so
+*.a
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.pyc
+
+# Open Rails
+*.s
+*.con
+*.eng
+*.wag
+
+# Temporary
+*.tmp
+*.temp
+*.bak
+
+# External connections
+.env
+*.keys
+secrets/
